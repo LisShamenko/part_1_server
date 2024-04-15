@@ -18,11 +18,12 @@ const strategy = new Strategy(options,
         Account.findById(payload.id)
             .then(account => {
                 if (!account) return done(null, false);
+                if (payload.expire > account.expire) return done(null, false);
+
                 return done(null, {
                     id: account.id,
                     name: account.name,
                     email: account.email,
-                    login: account.login,
                 });
             })
             .catch(err => {

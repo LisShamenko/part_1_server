@@ -1,8 +1,11 @@
 const express = require('express');
 const cp = require('cookie-parser');
 const bp = require('body-parser');
+const cors = require('cors');
+const path = require('path');
 const mongoose = require('mongoose');
 const passport = require('passport');
+const multer = require("multer");
 // 
 require('./env');
 const strategy = require('./strategy');
@@ -28,12 +31,32 @@ passport.use(strategy);
 
 
 
+// multer
+const storageConfig = multer.diskStorage({
+    destination: (req, file, cb) => {
+        cb(null, "uploads");
+    },
+    filename: (req, file, cb) => {
+        req.filename = file.originalname;
+        cb(null, file.originalname);
+    }
+});
+
+const useMulter = multer({
+    storage: storageConfig,
+}).single("file");
+
+
+
 // server
 const app = express();
+app.use(cors());
+app.use(express.static(path.join(__dirname, 'uploads')));
 app.use(passportHandler);
 app.use(cp());
-app.use(bp.urlencoded({ extended: false }));
-app.use(bp.json());
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
+app.use(useMulter);
 
 app.use((req, res, next) => {
     console.log('--------------------------------');
@@ -44,7 +67,7 @@ app.use((req, res, next) => {
     next();
 });
 
-app.use('/accounts', accountController);
+app.use('/api', accountController);
 
 app.listen(port, err => {
     console.log('--- Server --- listen ERROR  = ', err);
